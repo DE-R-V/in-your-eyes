@@ -22,7 +22,7 @@ public class DiseaseUIManager : MonoBehaviour
     public Toggle[] diseaseToggles;
 
     [Header("Info UI")]
-    public TMP_Text infoTitleText;      // Überschrift im InfoPanel
+    public TMP_Text infoTitleText;      // ï¿½berschrift im InfoPanel
     public TMP_Text infoBodyText;       // Beschreibung im InfoPanel
 
     [Header("Disease Daten")]
@@ -44,7 +44,7 @@ public class DiseaseUIManager : MonoBehaviour
             }
         }
 
-        // Optional: Toggle-Labels automatisch mit Krankheitsnamen füllen
+        // Optional: Toggle-Labels automatisch mit Krankheitsnamen fï¿½llen
         if (diseaseToggles != null && diseases != null)
         {
             int count = Mathf.Min(diseaseToggles.Length, diseases.Length);
@@ -65,7 +65,7 @@ public class DiseaseUIManager : MonoBehaviour
         if (infoPanel != null) infoPanel.SetActive(false);
     }
 
-    // Von jedem Toggle (OnValueChanged, mit Index 0–3) aufgerufen
+    // Von jedem Toggle (OnValueChanged, mit Index 0ï¿½3) aufgerufen
     public void OnDiseaseSelected(int index)
     {
         // Sicherheitschecks
@@ -91,7 +91,7 @@ public class DiseaseUIManager : MonoBehaviour
             infoPanel.SetActive(true);
     }
 
-    // Optional: InfoPanel schließen + Auswahl zurücksetzen
+    // Optional: InfoPanel schlieï¿½en + Auswahl zurï¿½cksetzen
     public void CloseInfoPanel()
     {
         if (infoPanel != null)

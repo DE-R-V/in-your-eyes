@@ -37,7 +37,7 @@ public class DiseaseUIManager : MonoBehaviour
     private DiseaseToggleGroup toggleGroup;
 
     [Header("Simulation")]
-    public SimulationManager simulationManager;
+    public SimulationManagerNew simulationManager;
     public onSimulationStarted onSimulationStarted;
 
     private void Awake()
@@ -144,4 +144,13 @@ public class DiseaseUIManager : MonoBehaviour
     {
         homeCanvas.SetActive(isActive); 
     }
+
+    public void BackToSelection()
+    {
+        if (infoPanel != null) infoPanel.SetActive(false);
+        if (selectionPanel != null) selectionPanel.SetActive(true);
+
+      
+    }
+
 }

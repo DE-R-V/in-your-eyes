@@ -1,6 +1,6 @@
 using UnityEngine;
-using UnityEngine.UI;
-using TMPro;   // falls du TextMeshPro verwendest
+using TMPro;
+using UnityEngine.Events;
 
 [System.Serializable]
 public class DiseaseData
@@ -8,101 +8,140 @@ public class DiseaseData
     public string name;
     [TextArea(3, 6)]
     public string description;
+    public GameObject sourceObject; 
 }
+
+[System.Serializable]
+public class onSimulationStarted : UnityEvent<GameObject> { } // passes the selected GameObject
 
 public class DiseaseUIManager : MonoBehaviour
 {
-    [Header("Flow Panels")]
-    public GameObject startPanel;       // z.B. dein erstes Panel mit Einleitung
-    public GameObject selectionPanel;   // Panel mit den Toggles
-    public GameObject infoPanel;        // Panel mit Titel + Beschreibung
+    [Header("Panels")]
+    public GameObject startPanel;        // First panel shown at launch
+    public GameObject selectionPanel;    // Panel that contains the toggle list
+    public GameObject infoPanel;         // Panel with disease name + description
+    public GameObject simulationPanel;   // Panel for the simulation
+    public GameObject homeCanvas;        // Main UI canvas
 
-    [Header("Auswahl-Toggles")]
-    [Tooltip("Toggles in der gleichen Reihenfolge wie die Disease-Daten.")]
-    public Toggle[] diseaseToggles;
+    [Header("Info Panel UI")]
+    public TMP_Text infoTitleText;       // Disease name label
+    public TMP_Text infoBodyText;        // Disease description label
 
-    [Header("Info UI")]
-    public TMP_Text infoTitleText;      // �berschrift im InfoPanel
-    public TMP_Text infoBodyText;       // Beschreibung im InfoPanel
+    [Header("Disease Database")]
+    public DiseaseData[] diseases;       // Name + description + object reference
 
-    [Header("Disease Daten")]
-    public DiseaseData[] diseases;      // Name + Beschreibung pro Krankheit
+    [Header("Toggle Generation")]
+    public GameObject diseaseItemPrefab; // Prefab for each toggle item
+    public Transform toggleContainer;    // Parent object for toggle instances
+
+    private DiseaseToggleGroup toggleGroup;
+
+    [Header("Simulation")]
+    public SimulationManager simulationManager;
+    public onSimulationStarted onSimulationStarted;
+
+    private void Awake()
+    {
+        // Get the toggle manager controlling exclusive selection
+        toggleGroup = GetComponent<DiseaseToggleGroup>();
+    }
 
     private void Start()
     {
-        // Startzustand
-        if (startPanel != null) startPanel.SetActive(true);
-        if (selectionPanel != null) selectionPanel.SetActive(false);
-        if (infoPanel != null) infoPanel.SetActive(false);
+        SetupPanels();
+        GenerateToggles();
+    }
 
-        // Alle Toggles erstmal aus
-        if (diseaseToggles != null)
+    /// <summary>
+    /// Initializes panel visibility at startup.
+    /// </summary>
+    private void SetupPanels()
+    {
+        if (startPanel) startPanel.SetActive(true);
+        if (selectionPanel) selectionPanel.SetActive(false);
+        if (infoPanel) infoPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Creates the toggle items dynamically based on the DiseaseData array.
+    /// </summary>
+    private void GenerateToggles()
+    {
+        // Clear existing children (in case of refresh or editor testing)
+        foreach (Transform child in toggleContainer)
+            Destroy(child.gameObject);
+
+        for (int i = 0; i < diseases.Length; i++)
         {
-            foreach (var t in diseaseToggles)
+            DiseaseData data = diseases[i];
+
+            // instantiate item
+            GameObject item = Instantiate(diseaseItemPrefab, toggleContainer);
+
+            // --- SET THE LABEL FROM DiseaseData ---
+            TMPro.TextMeshProUGUI tmpLabel = item.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            if (tmpLabel != null)
             {
-                if (t != null) t.isOn = false;
+                tmpLabel.text = data.name;
+            }
+            else
+            {
+                UnityEngine.UI.Text uiText = item.GetComponentInChildren<UnityEngine.UI.Text>();
+                if (uiText != null)
+                    uiText.text = data.name;
+            }
+
+            // --- PASS DATA + REFERENCES TO THE TOGGLE ---
+            DiseaseItemToggle toggle = item.GetComponent<DiseaseItemToggle>();
+            if (toggle != null)
+            {
+                toggle.Setup(data, i, toggleGroup, this);
+            }
+            else
+            {
+                Debug.LogWarning($"Prefab {diseaseItemPrefab.name} missing DiseaseItemToggle component");
             }
         }
 
-        // Optional: Toggle-Labels automatisch mit Krankheitsnamen f�llen
-        if (diseaseToggles != null && diseases != null)
-        {
-            int count = Mathf.Min(diseaseToggles.Length, diseases.Length);
-            for (int i = 0; i < count; i++)
-            {
-                var label = diseaseToggles[i].GetComponentInChildren<TMP_Text>();
-                if (label != null)
-                    label.text = diseases[i].name;
-            }
-        }
     }
 
-    // Vom Start-Button aufgerufen
-    public void OnStartButtonPressed()
+    /// <summary>
+    /// Called by the Start button to move from intro → selection panel.
+    /// </summary>
+    public void OnStartPressed()
     {
-        if (startPanel != null) startPanel.SetActive(false);
-        if (selectionPanel != null) selectionPanel.SetActive(true);
-        if (infoPanel != null) infoPanel.SetActive(false);
+        startPanel.SetActive(false);
+        selectionPanel.SetActive(true);
+        infoPanel.SetActive(false);
     }
 
-    // Von jedem Toggle (OnValueChanged, mit Index 0�3) aufgerufen
-    public void OnDiseaseSelected(int index)
+    /// <summary>
+    /// Displays information for a selected disease.
+    /// Called from DiseaseItemToggle.
+    /// </summary>
+    public void ShowDiseaseInfo(DiseaseData data)
     {
-        // Sicherheitschecks
-        if (diseaseToggles == null || index < 0 || index >= diseaseToggles.Length)
-            return;
+        if (infoTitleText) infoTitleText.text = data.name;
+        if (infoBodyText) infoBodyText.text = data.description;
+        simulationManager.InjectDisease(data.sourceObject);
 
-        // Nur reagieren, wenn der Toggle gerade AN ist
-        if (!diseaseToggles[index].isOn)
-            return;
-
-        if (diseases == null || index >= diseases.Length)
-            return;
-
-        var d = diseases[index];
-
-        if (infoTitleText != null)
-            infoTitleText.text = d.name;
-
-        if (infoBodyText != null)
-            infoBodyText.text = d.description;
-
-        if (infoPanel != null)
-            infoPanel.SetActive(true);
+        infoPanel.SetActive(true);
     }
 
-    // Optional: InfoPanel schlie�en + Auswahl zur�cksetzen
-    public void CloseInfoPanel()
+    /// <summary>
+    /// Hides the info panel and resets the toggle group.
+    /// </summary>
+    public void CloseInfo()
     {
-        if (infoPanel != null)
-            infoPanel.SetActive(false);
+        infoPanel.SetActive(false);
+        toggleGroup.ClearSelection();
+    }
 
-        if (diseaseToggles != null)
-        {
-            foreach (var t in diseaseToggles)
-            {
-                if (t != null) t.isOn = false;
-            }
-        }
+    /// <summary>
+    /// Changes activation status
+    /// </summary>
+    public void ToggleMainUI(bool isActive)
+    {
+        homeCanvas.SetActive(isActive); 
     }
 }

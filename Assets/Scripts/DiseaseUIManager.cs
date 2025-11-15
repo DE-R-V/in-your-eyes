@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class DiseaseData
@@ -9,6 +10,7 @@ public class DiseaseData
     [TextArea(3, 6)]
     public string description;
     public GameObject sourceObject; 
+    public Sprite illustration;
 }
 
 [System.Serializable]
@@ -18,14 +20,19 @@ public class DiseaseUIManager : MonoBehaviour
 {
     [Header("Panels")]
     public GameObject startPanel;        // First panel shown at launch
-    public GameObject selectionPanel;    // Panel that contains the toggle list
-    public GameObject infoPanel;         // Panel with disease name + description
     public GameObject simulationPanel;   // Panel for the simulation
     public GameObject homeCanvas;        // Main UI canvas
+    public GameObject homeRightColumnObject;    // Panel that contains the toggle list
+    public GameObject homeLeftColumnObject;     // Sidebar UI panel
+    public GameObject infoPanel;        // Panel that shows disease info
+    public GameObject openingPanel;     // Panel that contains simulation UI
+
+    public GameObject creditsPanel;     // Panel that shows credits
 
     [Header("Info Panel UI")]
     public TMP_Text infoTitleText;       // Disease name label
     public TMP_Text infoBodyText;        // Disease description label
+    public Image infoIllustration;   // Disease illustration image
 
     [Header("Disease Database")]
     public DiseaseData[] diseases;       // Name + description + object reference
@@ -58,8 +65,8 @@ public class DiseaseUIManager : MonoBehaviour
     private void SetupPanels()
     {
         if (startPanel) startPanel.SetActive(true);
-        if (selectionPanel) selectionPanel.SetActive(false);
-        if (infoPanel) infoPanel.SetActive(false);
+        if (homeRightColumnObject) homeRightColumnObject.SetActive(false);
+        if (homeLeftColumnObject) homeLeftColumnObject.SetActive(false);
     }
 
     /// <summary>
@@ -111,8 +118,11 @@ public class DiseaseUIManager : MonoBehaviour
     public void OnStartPressed()
     {
         startPanel.SetActive(false);
-        selectionPanel.SetActive(true);
+        homeLeftColumnObject.SetActive(true);
+        homeRightColumnObject.SetActive(true);
+        openingPanel.SetActive(true);
         infoPanel.SetActive(false);
+        creditsPanel.SetActive(false);
     }
 
     /// <summary>
@@ -123,8 +133,11 @@ public class DiseaseUIManager : MonoBehaviour
     {
         if (infoTitleText) infoTitleText.text = data.name;
         if (infoBodyText) infoBodyText.text = data.description;
+        if (infoIllustration != null) infoIllustration.sprite = data.illustration;
         simulationManager.InjectDisease(data.sourceObject);
 
+        openingPanel.SetActive(false);
+        creditsPanel.SetActive(false);
         infoPanel.SetActive(true);
     }
 
@@ -134,6 +147,7 @@ public class DiseaseUIManager : MonoBehaviour
     public void CloseInfo()
     {
         infoPanel.SetActive(false);
+        openingPanel.SetActive(true);
         toggleGroup.ClearSelection();
     }
 
@@ -148,9 +162,26 @@ public class DiseaseUIManager : MonoBehaviour
     public void BackToSelection()
     {
         if (infoPanel != null) infoPanel.SetActive(false);
-        if (selectionPanel != null) selectionPanel.SetActive(true);
-
-      
+        if (openingPanel != null) openingPanel.SetActive(true);
+        if (homeRightColumnObject != null) homeRightColumnObject.SetActive(true);
     }
-
+    public void ToggleCredits()
+    {
+        if (creditsPanel != null)
+        {
+            bool isActive = creditsPanel.activeSelf;
+            creditsPanel.SetActive(!isActive);
+            if (!isActive)
+            {
+                // Hiding other panels when showing credits
+                if (infoPanel != null) infoPanel.SetActive(false);
+                if (openingPanel != null) openingPanel.SetActive(false);
+            }
+            else
+            {
+                // Restoring opening panel when hiding credits
+                if (openingPanel != null) openingPanel.SetActive(true);
+            }
+        }
+    }
 }

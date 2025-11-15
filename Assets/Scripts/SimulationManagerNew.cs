@@ -14,11 +14,9 @@ public class SimulationManagerNew : MonoBehaviour
 
     // NEW: Pressing this action (bind it to A / Primary Button) exits the simulation.
     [Header("Input")]
-    [SerializeField] private InputActionReference exitToInfoAction; // e.g. XRI RightHand / Primary Button
+    [SerializeField] private InputActionReference toggleSimulationAction; // e.g. XRI RightHand / Primary Button
 
     [SerializeField] private GameObject simulationUIRoot;
-
-    [SerializeField] private GameObject infoPanel;
 
     // NEW: Slider that directly provides absolute float values (e.g., 1..5)
     [SerializeField] private Slider slider;
@@ -72,19 +70,19 @@ public class SimulationManagerNew : MonoBehaviour
     // NEW: Enable/disable the action and hook the callback.
     private void OnEnable()
     {
-        if (exitToInfoAction != null)
+        if (toggleSimulationAction != null)
         {
-            exitToInfoAction.action.performed += OnExitToInfoPerformed;
-            exitToInfoAction.action.Enable();
+            toggleSimulationAction.action.performed += OnToggleSimulationPerformed;
+            toggleSimulationAction.action.Enable();
         }
     }
 
     private void OnDisable()
     {
-        if (exitToInfoAction != null)
+        if (toggleSimulationAction != null)
         {
-            exitToInfoAction.action.performed -= OnExitToInfoPerformed;
-            exitToInfoAction.action.Disable();
+            toggleSimulationAction.action.performed -= OnToggleSimulationPerformed;
+            toggleSimulationAction.action.Disable();
         }
     }
 
@@ -122,10 +120,6 @@ public class SimulationManagerNew : MonoBehaviour
         {
             uiManager.ToggleMainUI(false);
 
-       
-            if (infoPanel) infoPanel.SetActive(false);
-
-        
             if (simulationUIRoot) simulationUIRoot.SetActive(true);
 
             currentDiseaseObject.SetActive(true);
@@ -139,6 +133,7 @@ public class SimulationManagerNew : MonoBehaviour
 
     public void ToggleSimulation()
     {
+        print("Toggling simulation.");
         if (isSimulationActive)
         {
             HideSimulation();
@@ -196,10 +191,9 @@ public class SimulationManagerNew : MonoBehaviour
     }
 
     // NEW: This is called when the A/Primary Button action fires.
-    private void OnExitToInfoPerformed(InputAction.CallbackContext _)
+    private void OnToggleSimulationPerformed(InputAction.CallbackContext _)
     {
         // Close simulation and bring back the info panel.
-        HideSimulation();
-        if (infoPanel) infoPanel.SetActive(true);
+        ToggleSimulation();
     }
 }

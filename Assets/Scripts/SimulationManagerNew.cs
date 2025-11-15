@@ -6,43 +6,43 @@ using UnityEngine.InputSystem;
 
 public class SimulationManagerNew : MonoBehaviour
 {
-    [SerializeField] private DiseaseUIManager uiManager;
-    [SerializeField] private GameObject container;
+    [Header("UI / Flow")]
+    [SerializeField] private DiseaseUIManager uiManager;   // optional: calls ToggleMainUI(bool)
+    [SerializeField] private GameObject container;         // parent for your sim visuals (e.g., plane)
+    [SerializeField] private GameObject simulationUIRoot;  // canvas/parent with the slider (shown IN sim)
+    [SerializeField] private GameObject infoPanel;         // info panel (shown OUTSIDE sim)
+    [SerializeField] private Slider slider;                // slider uses absolute values (e.g., 1..5)
+
+    [Header("Input (A / primary button toggles)")]
+    [SerializeField] private InputActionReference toggleSimulationAction; // bind to RightHand/primaryButton
 
     private GameObject currentDiseaseObject;
     private bool isSimulationActive = false;
 
-    // NEW: Pressing this action (bind it to A / Primary Button) exits the simulation.
-    [Header("Input")]
-    [SerializeField] private InputActionReference toggleSimulationAction; // e.g. XRI RightHand / Primary Button
-
-    [SerializeField] private GameObject simulationUIRoot;
-
-    // NEW: Slider that directly provides absolute float values (e.g., 1..5)
-    [SerializeField] private Slider slider;
-
-    // NEW: Per-disease shader mapping (drives a float property on renderers under 'root')
     [Serializable]
     public class DiseaseEntry
     {
-        public GameObject root;
-        public Renderer[] renderersOverride;                 
-        public string propertyName = "_Intensity";           
-        public float minValue = 1f;                          
-        public float maxValue = 5f;                        
-        public bool invert = false;                         
+        [Header("Roots / Renderers")]
+        public GameObject root;                   // camera-attached disease root
+        public Renderer[] renderersOverride;      // optional: restrict to specific renderers
 
+        [Header("Shader Property Mapping")]
+        public string propertyName = "_Intensity"; // Shader Graph 'Reference' name
+        public float minValue = 1f;                // absolute min (e.g., 1)
+        public float maxValue = 5f;                // absolute max (e.g., 5)
+        public bool invert = false;                // flips response inside [min..max]
+
+        // runtime cache
         [NonSerialized] public int propertyId = -1;
         [NonSerialized] public Renderer[] renderers;
         [NonSerialized] public MaterialPropertyBlock[] mpbs;
     }
 
-
     [SerializeField] private DiseaseEntry[] diseases;
 
-    // NEW: Cache renderers/MPBs once and hook the slider
     private void Awake()
     {
+        // cache renderers/MPBs once; do NOT auto SetActive() anything here
         if (diseases != null)
         {
             foreach (var d in diseases)
@@ -59,17 +59,13 @@ public class SimulationManagerNew : MonoBehaviour
                     d.renderers = Array.Empty<Renderer>();
 
                 d.mpbs = new MaterialPropertyBlock[d.renderers.Length];
-                for (int i = 0; i < d.mpbs.Length; i++)
-                    d.mpbs[i] = new MaterialPropertyBlock();
+                for (int i = 0; i < d.mpbs.Length; i++) d.mpbs[i] = new MaterialPropertyBlock();
             }
         }
 
         if (slider) slider.onValueChanged.AddListener(OnSliderChanged);
-    }
 
-    // NEW: Enable/disable the action and hook the callback.
-    private void OnEnable()
-    {
+        // NEW: keep the input action enabled for the whole app lifetime
         if (toggleSimulationAction != null)
         {
             toggleSimulationAction.action.performed += OnToggleSimulationPerformed;
@@ -77,77 +73,67 @@ public class SimulationManagerNew : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
         if (toggleSimulationAction != null)
-        {
             toggleSimulationAction.action.performed -= OnToggleSimulationPerformed;
-            toggleSimulationAction.action.Disable();
-        }
     }
 
-    public void InjectDisease(GameObject diseaseObject)
+    /// <summary>UI calls this when a disease was chosen; pass the camera-attached root (or a child).</summary>
+    public void InjectDisease(GameObject diseaseRoot)
     {
-        if (container == null)
+        if (!container)
         {
-            Debug.LogError("Container is not assigned in SimulationManager.");
+            Debug.LogError("SimulationManager: 'container' is not assigned.");
             return;
         }
-        currentDiseaseObject = diseaseObject;
 
-        // NEW: Immediately sync visuals to the current slider value
+        currentDiseaseObject = diseaseRoot;
+
+        // apply current slider value immediately so visuals match before showing
+        if (slider) ApplyValueToActive(slider.value);
+    }
+
+    public void ShowSimulation()
+    {
+        if (!currentDiseaseObject) return;
+
+        if (uiManager) uiManager.ToggleMainUI(false);
+        if (simulationUIRoot) simulationUIRoot.SetActive(true); // show slider UI
+        if (infoPanel) infoPanel.SetActive(false);       // hide info during sim
+
+        currentDiseaseObject.SetActive(true);
+        container.SetActive(true);
+        isSimulationActive = true;
+
         if (slider) ApplyValueToActive(slider.value);
     }
 
     public void HideSimulation()
     {
-        if (currentDiseaseObject != null)
-        {
-            uiManager.ToggleMainUI(true);
+        if (!currentDiseaseObject) return;
 
-  
-            if (simulationUIRoot) simulationUIRoot.SetActive(false);
+        if (uiManager) uiManager.ToggleMainUI(true);
+        if (simulationUIRoot) simulationUIRoot.SetActive(false); // hide slider UI
+        if (infoPanel) infoPanel.SetActive(true);         // show info again
 
-            currentDiseaseObject.SetActive(false);
-            container.SetActive(false);
-            isSimulationActive = false;
-        }
+        currentDiseaseObject.SetActive(false);
+        container.SetActive(false);
+        isSimulationActive = false;
     }
 
-    public void ShowSimulation()
-    {
-        if (currentDiseaseObject != null)
-        {
-            uiManager.ToggleMainUI(false);
-
-            if (simulationUIRoot) simulationUIRoot.SetActive(true);
-
-            currentDiseaseObject.SetActive(true);
-            container.SetActive(true);
-            isSimulationActive = true;
-
-            // NEW: Push current slider value to shader on show
-            if (slider) ApplyValueToActive(slider.value);
-        }
-    }
-
+    /// <summary>A / primary button toggles between Simulation and Info.</summary>
     public void ToggleSimulation()
     {
-        print("Toggling simulation.");
-        if (isSimulationActive)
-        {
-            HideSimulation();
-        }
-        else
-        {
-            ShowSimulation();
-        }
+        if (isSimulationActive) HideSimulation();
+        else ShowSimulation();
     }
 
-    // NEW: Slider callback -> use absolute slider value (e.g., 1..5) directly
+    private void OnToggleSimulationPerformed(InputAction.CallbackContext _) => ToggleSimulation();
+
+    // slider emits absolute float (e.g., 1..5); use it directly
     private void OnSliderChanged(float rawValue) => ApplyValueToActive(rawValue);
 
-    // NEW: Drive the active disease's shader property via MPB
     private void ApplyValueToActive(float value)
     {
         var entry = GetEntryForCurrent();
@@ -160,8 +146,7 @@ public class SimulationManagerNew : MonoBehaviour
         if (entry.invert)
         {
             float t01 = Mathf.InverseLerp(min, max, v);
-            t01 = 1f - t01;
-            v = Mathf.Lerp(entry.minValue, entry.maxValue, t01);
+            v = Mathf.Lerp(entry.minValue, entry.maxValue, 1f - t01);
         }
 
         if (entry.propertyId < 0 && !string.IsNullOrEmpty(entry.propertyName))
@@ -179,9 +164,10 @@ public class SimulationManagerNew : MonoBehaviour
             r.SetPropertyBlock(b);
         }
     }
+
     private DiseaseEntry GetEntryForCurrent()
     {
-        if (currentDiseaseObject == null || diseases == null) return null;
+        if (!currentDiseaseObject || diseases == null) return null;
 
         var entry = diseases.FirstOrDefault(d => d != null && d.root == currentDiseaseObject);
         if (entry != null) return entry;
@@ -189,11 +175,5 @@ public class SimulationManagerNew : MonoBehaviour
         return diseases.FirstOrDefault(d =>
             d != null && d.root && currentDiseaseObject.transform.IsChildOf(d.root.transform));
     }
-
-    // NEW: This is called when the A/Primary Button action fires.
-    private void OnToggleSimulationPerformed(InputAction.CallbackContext _)
-    {
-        // Close simulation and bring back the info panel.
-        ToggleSimulation();
-    }
 }
+

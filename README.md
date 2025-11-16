@@ -8,6 +8,8 @@ This application is not intended to serve as a medical diagnostic tool. It is bu
 
 The prototype is built in Unity 6 with the Universal Render Pipeline (URP) and uses OpenXR as the primary XR backend. The project targets the Meta Quest platform and leverages passthrough features to blend virtual overlays with the real world.
 
+[Figma link](https://www.figma.com/design/NrFwytrtFQpWzDvBSONWLj/InterfaceUI?node-id=0-1&t=rLw5m0DdHUGtBanN-1)
+
 ### Key Components
 
 ### XR Framework

@@ -122,4 +122,10 @@ public class SimulationManagerNew : MonoBehaviour
         print("Slider changed: " + value + " | Controller: " + currentController);
         currentController?.SetNormalizedValue(value);
     }
+
+    public void ClearDisease()
+    {
+        currentController = null;
+        currentDiseaseObject = null;
+    }
 }

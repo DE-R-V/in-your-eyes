@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "name": "EndSimulation",
+    "maps": [
+        {
+            "name": "ExitToInfo",
+            "id": "639389f3-2cf7-4cb2-960e-ad80241c8af4",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "60e2dae7-ffa9-4ec0-8150-ae89f68dd016",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "88411e85-163b-46cb-aa43-0d7aeba20d40",
+                    "path": "<XRController>{RightHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

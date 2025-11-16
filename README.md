@@ -1,4 +1,4 @@
-# In Your Eyes – XR Prototype for Simulating Vision Impairments
+# InYourEyes
 
 In Your Eyes is a prototype and proof of concept application created to simulate various vision impairments using Extended Reality technologies. The project demonstrates how XR can be used as an educational and accessibility oriented tool to help users understand how different visual conditions affect perception in real environments.
 
@@ -39,7 +39,7 @@ The prototype is built in Unity 6 with the Universal Render Pipeline (URP) and u
 
 This prototype is an early stage proof of concept and includes several limitations:
 
-- Visual simulations are approximations and not medically validated.
+- Visual simulations are not medically validated.
 - The system currently supports only a limited set of vision conditions.
 - The passthrough based rendering pipeline uses workaround techniques due to API limitations.
 

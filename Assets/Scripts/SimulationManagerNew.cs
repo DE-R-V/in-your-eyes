@@ -1,71 +1,34 @@
-using System;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Handles simulation flow: toggling simulation/info UI and sending slider input
+/// to the currently active disease controller.
+/// </summary>
 public class SimulationManagerNew : MonoBehaviour
 {
     [Header("UI / Flow")]
-    [SerializeField] private DiseaseUIManager uiManager;   // optional: calls ToggleMainUI(bool)
-    [SerializeField] private GameObject container;         // parent for your sim visuals (e.g., plane)
-    [SerializeField] private GameObject simulationUIRoot;  // canvas/parent with the slider (shown IN sim)
-    [SerializeField] private GameObject infoPanel;         // info panel (shown OUTSIDE sim)
-    [SerializeField] private Slider slider;                // slider uses absolute values (e.g., 1..5)
+    [SerializeField] private DiseaseUIManager uiManager;   // optional: toggle main UI
+    [SerializeField] private GameObject container;         // parent for simulation visuals
+    [SerializeField] private GameObject simulationUIRoot;  // UI canvas for slider during simulation
+    [SerializeField] private GameObject infoPanel;         // info panel outside simulation
+    [SerializeField] private Slider slider;                // slider for controlling disease effect
 
-    [Header("Input (A / primary button toggles)")]
-    [SerializeField] private InputActionReference toggleSimulationAction; // bind to RightHand/primaryButton
-
+    [Header("Input (A / Primary Button)")]
+    [SerializeField] private InputActionReference toggleSimulationAction;
     private GameObject currentDiseaseObject;
+
+    private IDiseaseController currentController;
     private bool isSimulationActive = false;
-
-    [Serializable]
-    public class DiseaseEntry
-    {
-        [Header("Roots / Renderers")]
-        public GameObject root;                   // camera-attached disease root
-        public Renderer[] renderersOverride;      // optional: restrict to specific renderers
-
-        [Header("Shader Property Mapping")]
-        public string propertyName = "_Intensity"; // Shader Graph 'Reference' name
-        public float minValue = 1f;                // absolute min (e.g., 1)
-        public float maxValue = 5f;                // absolute max (e.g., 5)
-        public bool invert = false;                // flips response inside [min..max]
-
-        // runtime cache
-        [NonSerialized] public int propertyId = -1;
-        [NonSerialized] public Renderer[] renderers;
-        [NonSerialized] public MaterialPropertyBlock[] mpbs;
-    }
-
-    [SerializeField] private DiseaseEntry[] diseases;
 
     private void Awake()
     {
-        // cache renderers/MPBs once; do NOT auto SetActive() anything here
-        if (diseases != null)
-        {
-            foreach (var d in diseases)
-            {
-                if (d == null) continue;
+        // Slider callback
+        if (slider != null)
+            slider.onValueChanged.AddListener(OnSliderChanged);
 
-                d.propertyId = string.IsNullOrEmpty(d.propertyName) ? -1 : Shader.PropertyToID(d.propertyName);
-
-                if (d.renderersOverride != null && d.renderersOverride.Length > 0)
-                    d.renderers = d.renderersOverride.Where(r => r != null).ToArray();
-                else if (d.root)
-                    d.renderers = d.root.GetComponentsInChildren<Renderer>(true);
-                else
-                    d.renderers = Array.Empty<Renderer>();
-
-                d.mpbs = new MaterialPropertyBlock[d.renderers.Length];
-                for (int i = 0; i < d.mpbs.Length; i++) d.mpbs[i] = new MaterialPropertyBlock();
-            }
-        }
-
-        if (slider) slider.onValueChanged.AddListener(OnSliderChanged);
-
-        // NEW: keep the input action enabled for the whole app lifetime
+        // Input action callback
         if (toggleSimulationAction != null)
         {
             toggleSimulationAction.action.performed += OnToggleSimulationPerformed;
@@ -79,50 +42,70 @@ public class SimulationManagerNew : MonoBehaviour
             toggleSimulationAction.action.performed -= OnToggleSimulationPerformed;
     }
 
-    /// <summary>UI calls this when a disease was chosen; pass the camera-attached root (or a child).</summary>
+    /// <summary>
+    /// Called when a disease is selected; activates its controller.
+    /// </summary>
     public void InjectDisease(GameObject diseaseRoot)
     {
-        if (!container)
+        if (!diseaseRoot)
         {
-            Debug.LogError("SimulationManager: 'container' is not assigned.");
+            Debug.LogWarning("SimulationManager: InjectDisease called with null root.");
             return;
         }
 
         currentDiseaseObject = diseaseRoot;
+        currentController = diseaseRoot.GetComponent<IDiseaseController>();
+        if (currentController == null)
+        {
+            Debug.LogWarning("Selected disease root has no IDiseaseController component.");
+            return;
+        }
 
-        // apply current slider value immediately so visuals match before showing
-        if (slider) ApplyValueToActive(slider.value);
+        // Immediately apply slider value to controller
+        OnSliderChanged(slider != null ? slider.value : 1f);
     }
 
+    /// <summary>
+    /// Show simulation UI and activate the disease controller.
+    /// </summary>
     public void ShowSimulation()
     {
-        if (!currentDiseaseObject) return;
+        if (currentController == null) return;
 
-        if (uiManager) uiManager.ToggleMainUI(false);
-        if (simulationUIRoot) simulationUIRoot.SetActive(true); // show slider UI
-        if (infoPanel) infoPanel.SetActive(false);       // hide info during sim
+        uiManager?.ToggleMainUI(false);
+        simulationUIRoot?.SetActive(true);
+        infoPanel?.SetActive(false);
 
+        if (currentController == null) return;
         currentDiseaseObject.SetActive(true);
-        container.SetActive(true);
+        container?.SetActive(true);
         isSimulationActive = true;
 
-        if (slider) ApplyValueToActive(slider.value);
+        // Push current slider value
+        OnSliderChanged(slider != null ? slider.value : 1f);
     }
 
+    /// <summary>
+    /// Hide simulation UI and deactivate the disease controller.
+    /// </summary>
     public void HideSimulation()
     {
-        if (!currentDiseaseObject) return;
+        if (currentController == null) return;
 
-        if (uiManager) uiManager.ToggleMainUI(true);
-        if (simulationUIRoot) simulationUIRoot.SetActive(false); // hide slider UI
-        if (infoPanel) infoPanel.SetActive(true);         // show info again
+        uiManager?.ToggleMainUI(true);
+        simulationUIRoot?.SetActive(false);
+        infoPanel?.SetActive(true);
 
+        if (currentController == null) return;
         currentDiseaseObject.SetActive(false);
-        container.SetActive(false);
+        container?.SetActive(false);
+        slider.value = 0f;
         isSimulationActive = false;
     }
 
-    /// <summary>A / primary button toggles between Simulation and Info.</summary>
+    /// <summary>
+    /// Toggle simulation on/off using the A/Primary button or UI call.
+    /// </summary>
     public void ToggleSimulation()
     {
         if (isSimulationActive) HideSimulation();
@@ -131,49 +114,12 @@ public class SimulationManagerNew : MonoBehaviour
 
     private void OnToggleSimulationPerformed(InputAction.CallbackContext _) => ToggleSimulation();
 
-    // slider emits absolute float (e.g., 1..5); use it directly
-    private void OnSliderChanged(float rawValue) => ApplyValueToActive(rawValue);
-
-    private void ApplyValueToActive(float value)
+    /// <summary>
+    /// Called by slider; sends value to current disease controller.
+    /// </summary>
+    private void OnSliderChanged(float value)
     {
-        var entry = GetEntryForCurrent();
-        if (entry == null) return;
-
-        float min = Mathf.Min(entry.minValue, entry.maxValue);
-        float max = Mathf.Max(entry.minValue, entry.maxValue);
-        float v = Mathf.Clamp(value, min, max);
-
-        if (entry.invert)
-        {
-            float t01 = Mathf.InverseLerp(min, max, v);
-            v = Mathf.Lerp(entry.minValue, entry.maxValue, 1f - t01);
-        }
-
-        if (entry.propertyId < 0 && !string.IsNullOrEmpty(entry.propertyName))
-            entry.propertyId = Shader.PropertyToID(entry.propertyName);
-        if (entry.propertyId < 0 || entry.renderers == null) return;
-
-        for (int i = 0; i < entry.renderers.Length; i++)
-        {
-            var r = entry.renderers[i];
-            if (!r) continue;
-
-            var b = entry.mpbs[i];
-            r.GetPropertyBlock(b);
-            b.SetFloat(entry.propertyId, v);
-            r.SetPropertyBlock(b);
-        }
-    }
-
-    private DiseaseEntry GetEntryForCurrent()
-    {
-        if (!currentDiseaseObject || diseases == null) return null;
-
-        var entry = diseases.FirstOrDefault(d => d != null && d.root == currentDiseaseObject);
-        if (entry != null) return entry;
-
-        return diseases.FirstOrDefault(d =>
-            d != null && d.root && currentDiseaseObject.transform.IsChildOf(d.root.transform));
+        print("Slider changed: " + value + " | Controller: " + currentController);
+        currentController?.SetNormalizedValue(value);
     }
 }
-

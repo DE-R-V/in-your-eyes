@@ -8,7 +8,7 @@ using Unity.VectorGraphics;
 /// </summary>
 public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-    public Image backgroundImage;
+    public SVGImage backgroundImage;
     public TMPro.TextMeshProUGUI labelText;
     public SVGImage statusImage;
 
@@ -75,7 +75,7 @@ public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
         labelText.color = selected ? Color.white : new Color32(39, 39, 39, 255);
         statusImage.sprite = selected ? checkedSprite : uncheckedSprite;
-        backgroundImage.color = selected ? whiteOpaque : whiteTransparent;
+        backgroundImage.color = selected ? new Color32(0, 95, 150, 255) : whiteTransparent;
     }
 
     public bool IsSelected => isSelected;
@@ -84,7 +84,7 @@ public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerEx
         if (backgroundImage == null) return;
 
         // Highlight on hover (even if not selected)
-        backgroundImage.color = new Color32(204, 121, 167, 255);
+        backgroundImage.color = new Color32(90, 180, 230, 255);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -93,6 +93,6 @@ public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerEx
 
         // If selected, stay opaque.  
         // If not selected, go back to transparent.
-        backgroundImage.color = isSelected ? whiteOpaque : whiteTransparent;
+        backgroundImage.color = isSelected ? new Color32(0, 95, 150, 255) : whiteTransparent;
     }
 }

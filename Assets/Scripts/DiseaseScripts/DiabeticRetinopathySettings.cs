@@ -6,7 +6,7 @@ public class DiabeticRetinopathySettings : ScriptableObject
     [Header("Spot Generation")]
 
     [Tooltip("The frequency/tiling of the spot pattern. Higher = more spots.")]
-    [Range(0, 10)]
+    [Range(0, 50)]
     public float Spot_Amount = 3f;
 
     [Tooltip("Controls the base threshold for spots to appear. Higher = larger spots.")]

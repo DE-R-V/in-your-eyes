@@ -142,16 +142,6 @@ public class DiseaseUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Hides the info panel and resets the toggle group.
-    /// </summary>
-    public void CloseInfo()
-    {
-        infoPanel.SetActive(false);
-        openingPanel.SetActive(true);
-        toggleGroup.ClearSelection();
-    }
-
-    /// <summary>
     /// Changes activation status
     /// </summary>
     public void ToggleMainUI(bool isActive)
@@ -164,9 +154,11 @@ public class DiseaseUIManager : MonoBehaviour
         if (infoPanel != null) infoPanel.SetActive(false);
         if (openingPanel != null) openingPanel.SetActive(true);
         if (homeRightColumnObject != null) homeRightColumnObject.SetActive(true);
+        toggleGroup.ClearSelection();
     }
     public void ToggleCredits()
     {
+        toggleGroup.ClearSelection();
         if (creditsPanel != null)
         {
             bool isActive = creditsPanel.activeSelf;

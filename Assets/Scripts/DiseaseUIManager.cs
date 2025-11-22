@@ -28,6 +28,7 @@ public class DiseaseUIManager : MonoBehaviour
     public GameObject openingPanel;     // Panel that contains simulation UI
 
     public GameObject creditsPanel;     // Panel that shows credits
+    public GameObject instructionPanel;   // Panel that shows instructions
 
     [Header("Info Panel UI")]
     public TMP_Text infoTitleText;       // Disease name label
@@ -138,6 +139,7 @@ public class DiseaseUIManager : MonoBehaviour
 
         openingPanel.SetActive(false);
         creditsPanel.SetActive(false);
+        instructionPanel.SetActive(false);
         infoPanel.SetActive(true);
     }
 
@@ -172,6 +174,27 @@ public class DiseaseUIManager : MonoBehaviour
             else
             {
                 // Restoring opening panel when hiding credits
+                if (openingPanel != null) openingPanel.SetActive(true);
+            }
+        }
+    }
+
+    public void ToggleInstructions()
+    {
+        toggleGroup.ClearSelection();
+        if (instructionPanel != null)
+        {
+            bool isActive = instructionPanel.activeSelf;
+            instructionPanel.SetActive(!isActive);
+            if (!isActive)
+            {
+                // Hiding other panels when showing instructions
+                if (infoPanel != null) infoPanel.SetActive(false);
+                if (openingPanel != null) openingPanel.SetActive(false);
+            }
+            else
+            {
+                // Restoring opening panel when hiding instructions
                 if (openingPanel != null) openingPanel.SetActive(true);
             }
         }

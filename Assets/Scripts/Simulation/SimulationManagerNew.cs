@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using TMPro;
 
 /// <summary>
 /// Handles simulation flow: toggling simulation/info UI and sending slider input
@@ -17,10 +18,12 @@ public class SimulationManagerNew : MonoBehaviour
 
     [Header("Input (A / Primary Button)")]
     [SerializeField] private InputActionReference toggleSimulationAction;
+
     private GameObject currentDiseaseObject;
 
     private IDiseaseController currentController;
     private bool isSimulationActive = false;
+    private bool isUsingHands = false;
 
     private void Awake()
     {

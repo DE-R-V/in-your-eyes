@@ -84,6 +84,7 @@ public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerEx
         if (backgroundImage == null) return;
 
         // Highlight on hover (even if not selected)
+        if (isSelected) return;
         backgroundImage.color = new Color32(90, 180, 230, 255);
     }
 

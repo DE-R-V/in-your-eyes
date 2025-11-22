@@ -7,7 +7,7 @@
             "id": "639389f3-2cf7-4cb2-960e-ad80241c8af4",
             "actions": [
                 {
-                    "name": "New action",
+                    "name": "ToggleSimulation",
                     "type": "Button",
                     "id": "60e2dae7-ffa9-4ec0-8150-ae89f68dd016",
                     "expectedControlType": "",
@@ -24,7 +24,40 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "New action",
+                    "action": "ToggleSimulation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "68e0a285-ce55-4abf-9957-5274153317b5",
+                    "path": "<XRController>{RightHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSimulation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5685072b-6ecd-477c-aa51-b245ee58ba34",
+                    "path": "<XRController>{LeftHand}/{PrimaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSimulation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8f8b6d95-b559-4bd2-a692-c7e98e1f8c26",
+                    "path": "<XRController>{LeftHand}/{SecondaryButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleSimulation",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

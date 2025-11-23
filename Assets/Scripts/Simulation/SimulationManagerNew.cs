@@ -9,12 +9,10 @@ using TMPro;
 /// </summary>
 public class SimulationManagerNew : MonoBehaviour
 {
-    [Header("UI / Flow")]
-    [SerializeField] private DiseaseUIManager uiManager;   // optional: toggle main UI
-    [SerializeField] private GameObject container;         // parent for simulation visuals
-    [SerializeField] private GameObject simulationUIRoot;  // UI canvas for slider during simulation
-    [SerializeField] private GameObject infoPanel;         // info panel outside simulation
+    [Header("In Simulation")]
     [SerializeField] private Slider slider;                // slider for controlling disease effect
+
+    [SerializeField] private SimulationPanelManager simulationPanelManager;
 
     [Header("Input (A / Primary Button)")]
     [SerializeField] private InputActionReference toggleSimulationAction;
@@ -23,7 +21,6 @@ public class SimulationManagerNew : MonoBehaviour
 
     private IDiseaseController currentController;
     private bool isSimulationActive = false;
-    private bool isUsingHands = false;
 
     private void Awake()
     {
@@ -48,8 +45,9 @@ public class SimulationManagerNew : MonoBehaviour
     /// <summary>
     /// Called when a disease is selected; activates its controller.
     /// </summary>
-    public void InjectDisease(GameObject diseaseRoot)
+    public void InjectDisease(DiseaseData diseaseData)
     {
+        GameObject diseaseRoot = diseaseData.sourceObject;
         if (!diseaseRoot)
         {
             Debug.LogWarning("SimulationManager: InjectDisease called with null root.");
@@ -58,6 +56,7 @@ public class SimulationManagerNew : MonoBehaviour
 
         currentDiseaseObject = diseaseRoot;
         currentController = diseaseRoot.GetComponent<IDiseaseController>();
+        simulationPanelManager.InjectDiseaseInfo(diseaseData.previewImage, diseaseData.name, diseaseData.preivewDescription);
         if (currentController == null)
         {
             Debug.LogWarning("Selected disease root has no IDiseaseController component.");
@@ -73,15 +72,11 @@ public class SimulationManagerNew : MonoBehaviour
     /// </summary>
     public void ShowSimulation()
     {
+        print("ShowSimulation called");
         if (currentController == null) return;
-
-        uiManager?.ToggleMainUI(false);
-        simulationUIRoot?.SetActive(true);
-        infoPanel?.SetActive(false);
-
-        if (currentController == null) return;
+        
+        simulationPanelManager.OpenSimulationPanel();
         currentDiseaseObject.SetActive(true);
-        container?.SetActive(true);
         isSimulationActive = true;
 
         // Push current slider value
@@ -95,13 +90,8 @@ public class SimulationManagerNew : MonoBehaviour
     {
         if (currentController == null) return;
 
-        uiManager?.ToggleMainUI(true);
-        simulationUIRoot?.SetActive(false);
-        infoPanel?.SetActive(true);
-
-        if (currentController == null) return;
+        simulationPanelManager.CloseSimulationPanel();
         currentDiseaseObject.SetActive(false);
-        container?.SetActive(false);
         slider.value = 0f;
         isSimulationActive = false;
     }

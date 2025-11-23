@@ -9,8 +9,11 @@ public class DiseaseData
     public string name;
     [TextArea(3, 6)]
     public string description;
+    [TextArea(3, 6)]    
+    public string preivewDescription;
     public GameObject sourceObject; 
     public Sprite illustration;
+    public Sprite previewImage;
 }
 
 [System.Serializable]
@@ -135,7 +138,7 @@ public class DiseaseUIManager : MonoBehaviour
         if (infoTitleText) infoTitleText.text = data.name;
         if (infoBodyText) infoBodyText.text = data.description;
         if (infoIllustration != null) infoIllustration.sprite = data.illustration;
-        simulationManager.InjectDisease(data.sourceObject);
+        simulationManager.InjectDisease(data);
 
         openingPanel.SetActive(false);
         creditsPanel.SetActive(false);
@@ -148,6 +151,7 @@ public class DiseaseUIManager : MonoBehaviour
     /// </summary>
     public void ToggleMainUI(bool isActive)
     {
+        print("ToggleMainUI: " + isActive);
         homeCanvas.SetActive(isActive); 
     }
 

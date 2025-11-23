@@ -115,7 +115,7 @@ public class SimulationManagerNew : MonoBehaviour
         else ShowSimulation();
     }
 
-    private void OnToggleSimulationPerformed(InputAction.CallbackContext _) => ToggleSimulation();
+    private void OnToggleSimulationPerformed(InputAction.CallbackContext _) => HideSimulation();
 
     /// <summary>
     /// Called by slider; sends value to current disease controller.

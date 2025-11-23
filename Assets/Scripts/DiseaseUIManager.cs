@@ -170,6 +170,7 @@ public class DiseaseUIManager : MonoBehaviour
                 // Hiding other panels when showing credits
                 if (infoPanel != null) infoPanel.SetActive(false);
                 if (openingPanel != null) openingPanel.SetActive(false);
+                if (instructionPanel != null) instructionPanel.SetActive(false);
             }
             else
             {

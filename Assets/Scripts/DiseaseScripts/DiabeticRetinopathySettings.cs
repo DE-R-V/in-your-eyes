@@ -6,7 +6,7 @@ public class DiabeticRetinopathySettings : ScriptableObject
     [Header("Spot Generation")]
 
     [Tooltip("The frequency/tiling of the spot pattern. Higher = more spots.")]
-    [Range(0, 50)]
+    [Range(0, 10)]
     public float Spot_Amount = 3f;
 
     [Tooltip("Controls the base threshold for spots to appear. Higher = larger spots.")]
@@ -36,4 +36,22 @@ public class DiabeticRetinopathySettings : ScriptableObject
     [Tooltip("WarpScale")]
     [Range(0.1f, 50f)]
     public float Warp_Scale = 0f;
+
+    [Header("Floaters")]
+
+    [Tooltip("Opacity of the floaters (separate from spots).")]
+    [Range(0, 1)]
+    public float Floater_Opacity = 0.5f;
+
+    [Tooltip("Size/Amount of floaters. Higher value = smaller and more floaters.")]
+    [Range(5, 200)]
+    public float Floater_Density = 15f;
+
+    [Tooltip("How fast the floaters drift.")]
+    [Range(0, 1)]
+    public float Floater_Speed = 0.1f;
+
+    [Tooltip("Thickness of the floaters.")]
+    [Range(0.1f, 50f)]
+    public float Floater_Width = 5f;
 }

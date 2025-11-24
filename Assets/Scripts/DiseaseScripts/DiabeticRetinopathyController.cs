@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
 {
     [Header("Targets")]
-    [Tooltip("Assign TWO renderers (e.g., two planes) that use the Diabetic Retinopathy material.")]
+    [Tooltip("Assign renderers (e.g., planes) that use the Diabetic Retinopathy material.")]
     public Renderer[] targetRenderers = new Renderer[2];
 
     [Header("Stages")]
@@ -26,6 +26,12 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
     private int blurrySharpnessID;
     private int warpStrengthID;
     private int warpScaleID;
+
+    // Floater Property IDs
+    private int floaterOpacityID;
+    private int floaterDensityID;
+    private int floaterSpeedID;
+    private int floaterWidthID;
 
     private int currentStageIndex = 0;
 
@@ -70,6 +76,12 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
         warpStrengthID = Shader.PropertyToID("_Warp_Strength");
         warpScaleID = Shader.PropertyToID("_Warp_Scale");
 
+        // Floater IDs
+        floaterOpacityID = Shader.PropertyToID("_Floater_Opacity");
+        floaterDensityID = Shader.PropertyToID("_Floater_Density");
+        floaterSpeedID = Shader.PropertyToID("_Floater_Speed");
+        floaterWidthID = Shader.PropertyToID("_Floater_Width");
+
         UpdateMaterialProperties();
     }
 
@@ -99,6 +111,7 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
 
         float localLerp = totalStageIndex - stageA_index;
 
+        // Interpolate Standard Properties
         float lerpedSpotAmount = Mathf.Lerp(stageA.Spot_Amount, stageB.Spot_Amount, localLerp);
         float lerpedSpotSize = Mathf.Lerp(stageA.Spot_Size, stageB.Spot_Size, localLerp);
         float lerpedDarkness = Mathf.Lerp(stageA.Darkness, stageB.Darkness, localLerp);
@@ -106,6 +119,12 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
         float lerpedBlurrySharpness = Mathf.Lerp(stageA.Blurry_Sharpness, stageB.Blurry_Sharpness, localLerp);
         float lerpedWarpStrength = Mathf.Lerp(stageA.Warp_Strength, stageB.Warp_Strength, localLerp);
         float lerpedWarpScale = Mathf.Lerp(stageA.Warp_Scale, stageB.Warp_Scale, localLerp);
+
+        // Interpolate Floater Properties
+        float lerpedFloaterOpacity = Mathf.Lerp(stageA.Floater_Opacity, stageB.Floater_Opacity, localLerp);
+        float lerpedFloaterDensity = Mathf.Lerp(stageA.Floater_Density, stageB.Floater_Density, localLerp);
+        float lerpedFloaterSpeed = Mathf.Lerp(stageA.Floater_Speed, stageB.Floater_Speed, localLerp);
+        float lerpedFloaterWidth = Mathf.Lerp(stageA.Floater_Width, stageB.Floater_Width, localLerp);
 
         // APPLY TO BOTH MATERIAL INSTANCES
         foreach (Material mat in materialInstances)
@@ -117,6 +136,12 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
             mat.SetFloat(blurrySharpnessID, lerpedBlurrySharpness);
             mat.SetFloat(warpStrengthID, lerpedWarpStrength);
             mat.SetFloat(warpScaleID, lerpedWarpScale);
+
+            // Set Floater Properties
+            mat.SetFloat(floaterOpacityID, lerpedFloaterOpacity);
+            mat.SetFloat(floaterDensityID, lerpedFloaterDensity);
+            mat.SetFloat(floaterSpeedID, lerpedFloaterSpeed);
+            mat.SetFloat(floaterWidthID, lerpedFloaterWidth);
         }
     }
 
@@ -137,6 +162,12 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
             mat.SetFloat(blurrySharpnessID, s.Blurry_Sharpness);
             mat.SetFloat(warpStrengthID, s.Warp_Strength);
             mat.SetFloat(warpScaleID, s.Warp_Scale);
+
+            // Set Floater Properties
+            mat.SetFloat(floaterOpacityID, s.Floater_Opacity);
+            mat.SetFloat(floaterDensityID, s.Floater_Density);
+            mat.SetFloat(floaterSpeedID, s.Floater_Speed);
+            mat.SetFloat(floaterWidthID, s.Floater_Width);
         }
 
         globalSlider = (float)currentStageIndex / (stages.Count - 1);
@@ -161,7 +192,8 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
 
         SnapToStage(prevStage);
     }
-        public void SetNormalizedValue(float value)
+
+    public void SetNormalizedValue(float value)
     {
         globalSlider = Mathf.Clamp01(value);
         UpdateMaterialProperties();

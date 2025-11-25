@@ -97,7 +97,7 @@ public class SimulationManagerNew : MonoBehaviour
     /// </summary>
     public void HideSimulation()
     {
-        if (currentController == null) return;
+        if (!isSimulationActive || currentController == null) return;
 
         simulationPanelManager.CloseSimulationPanel();
         currentDiseaseObject.SetActive(false);

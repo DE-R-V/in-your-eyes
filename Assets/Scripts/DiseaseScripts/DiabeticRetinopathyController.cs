@@ -94,7 +94,7 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
         floaterOpacityID = Shader.PropertyToID("_Floater_Opacity");
         floaterDensityID = Shader.PropertyToID("_Floater_Density");
         floaterSpeedID = Shader.PropertyToID("_Floater_Speed");
-        floaterWidthID = Shader.PropertyToID("_FLoater_Width"); // Note the capital L based on your shader
+        floaterWidthID = Shader.PropertyToID("_Floater_Width"); // Note the capital L based on your shader
     }
 
     void Update()

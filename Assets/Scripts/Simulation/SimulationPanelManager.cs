@@ -11,6 +11,7 @@ public class SimulationPanelManager : MonoBehaviour
     [Header("Simulation Panel")]
     [SerializeField] private GameObject simulationPanel;
     [SerializeField] private TextMeshProUGUI label;
+    [SerializeField] private SwitcherManager switcherManager;
     [Header("Overall Slider")]
     [SerializeField] private RectTransform overallSliderBackground;
     [SerializeField] private GameObject overallSliderContent;
@@ -98,6 +99,7 @@ public class SimulationPanelManager : MonoBehaviour
             simulationPanel.SetActive(false);
         uiManager.ToggleMainUI(true);
         uiManager.infoPanel.SetActive(true);
+        switcherManager.Reset();
     }
 
     public void CloseDisclaimerPanel()

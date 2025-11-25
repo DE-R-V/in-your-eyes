@@ -152,4 +152,13 @@ public class SwitcherManager : MonoBehaviour
             preciseBackground.color = transparent;
         }
     }
+
+    public void Reset() 
+    {
+        SetMode(false);
+        leftPreciseSlider.value = 0f;
+        rightPreciseSlider.value = 0f;
+        SetMode(true);
+        simpleSlider.value = 0f;
+    }
 }

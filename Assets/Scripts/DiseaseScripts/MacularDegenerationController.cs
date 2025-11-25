@@ -3,25 +3,36 @@ using UnityEngine;
 
 /// <summary>
 /// Controls the Macular Degeneration shader by interpolating between multiple
-/// MacularDegenerationSettings ScriptableObjects.
+/// MacularDegenerationSettings ScriptableObjects with independent eye control.
 /// </summary>
 public class MacularDegenerationController : MonoBehaviour, IDiseaseController
 {
     [Header("Targets")]
-    [Tooltip("One or more Renderers that use the Macular Degeneration shader.")]
-    public Renderer[] targetRenderers;
+    [Tooltip("Assign the Left Eye Mesh Renderer here.")]
+    public Renderer leftEyeRenderer;
+    [Tooltip("Assign the Right Eye Mesh Renderer here.")]
+    public Renderer rightEyeRenderer;
 
     [Header("Stages")]
     [Tooltip("Assign ScriptableObject stages in order (Stage0 → StageN).")]
     public List<MacularDegenerationSettings> stages;
 
     [Header("Control")]
-    [Tooltip("Master slider (0–1) controlling interpolation across stages.")]
+    [Tooltip("Master slider (0–1). Changing this updates both eyes.")]
     [Range(0f, 1f)]
     public float globalSlider = 0f;
 
-    // Runtime instances for each renderer
-    private Material[] materialInstances;
+    [Tooltip("Controls only the Left Eye renderer.")]
+    [Range(0f, 1f)]
+    public float leftEyeSlider = 0f;
+
+    [Tooltip("Controls only the Right Eye renderer.")]
+    [Range(0f, 1f)]
+    public float rightEyeSlider = 0f;
+
+    // Runtime instances
+    private Material leftMatInstance;
+    private Material rightMatInstance;
 
     // Shader property IDs
     private int shapeScaleID;
@@ -31,53 +42,42 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
     private int warpStrengthID;
     private int warpScaleID;
 
-    // Current discrete stage index
+    // Internal tracking for Inspector changes
+    private float _lastGlobal;
     private int currentStageIndex = 0;
 
     void Start()
     {
-        // --- Validate renderers ---
-        if (targetRenderers == null || targetRenderers.Length == 0)
-        {
-            Debug.LogError("MacularDegenerationController: No renderers assigned!", this);
-            enabled = false;
-            return;
-        }
+        InitializeRenderers();
+        InitializeShaderIDs();
 
-        // --- Validate stages ---
+        // Force initial update
+        ApplySettingsToMaterial(leftMatInstance, leftEyeSlider);
+        ApplySettingsToMaterial(rightMatInstance, rightEyeSlider);
+        
+        UpdateLastValues();
+    }
+
+    void InitializeRenderers()
+    {
+        if (leftEyeRenderer != null)
+            leftMatInstance = leftEyeRenderer.material;
+        else
+            Debug.LogWarning("Left Eye Renderer not assigned!", this);
+
+        if (rightEyeRenderer != null)
+            rightMatInstance = rightEyeRenderer.material;
+        else
+            Debug.LogWarning("Right Eye Renderer not assigned!", this);
+
         if (stages == null || stages.Count < 2)
         {
             Debug.LogError("MacularDegenerationController: At least 2 stage assets are required!", this);
             enabled = false;
-            return;
         }
-
-        // --- Create material instances ---
-        materialInstances = new Material[targetRenderers.Length];
-        for (int i = 0; i < targetRenderers.Length; i++)
-        {
-            if (targetRenderers[i] != null)
-                materialInstances[i] = targetRenderers[i].material; // creates an instance
-        }
-
-        CacheShaderIDs();
-        UpdateMaterialProperties();
     }
 
-    void Update()
-    {
-        // Continuously update based on slider
-        UpdateMaterialProperties();
-    }
-
-    private void OnValidate()
-    {
-        if (materialInstances != null && stages != null && stages.Count >= 2)
-            UpdateMaterialProperties();
-    }
-
-    // Cache shader property IDs (faster than using strings every frame)
-    private void CacheShaderIDs()
+    void InitializeShaderIDs()
     {
         shapeScaleID = Shader.PropertyToID("_Shape_Scale");
         falloffPowerID = Shader.PropertyToID("_Falloff_Power");
@@ -87,116 +87,135 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
         warpScaleID = Shader.PropertyToID("_Warp_Scale");
     }
 
-    /// <summary>
-    /// Interpolates between stages based on globalSlider and applies to all materials.
-    /// </summary>
-    private void UpdateMaterialProperties(string eye = "Both")
+    void Update()
     {
-        if (materialInstances == null || materialInstances.Length == 0)
-            return;
+        // In runtime, check if Global changed via script or UI
+        if (!Mathf.Approximately(globalSlider, _lastGlobal))
+        {
+            SyncGlobalToEyes();
+        }
+
+        ApplySettingsToMaterial(leftMatInstance, leftEyeSlider);
+        ApplySettingsToMaterial(rightMatInstance, rightEyeSlider);
+
+        UpdateLastValues();
+    }
+
+    private void OnValidate()
+    {
+        if (stages == null || stages.Count < 2) return;
+
+        // Sync Global -> Eyes if Global moved in Inspector
+        if (!Mathf.Approximately(globalSlider, _lastGlobal))
+        {
+            leftEyeSlider = globalSlider;
+            rightEyeSlider = globalSlider;
+        }
+        
+        UpdateLastValues();
+    }
+
+    private void SyncGlobalToEyes()
+    {
+        leftEyeSlider = globalSlider;
+        rightEyeSlider = globalSlider;
+    }
+
+    private void UpdateLastValues()
+    {
+        _lastGlobal = globalSlider;
+    }
+
+    /// <summary>
+    /// Core logic: Calculates settings for a specific progress value (0-1) and applies to a material.
+    /// </summary>
+    private void ApplySettingsToMaterial(Material mat, float progress)
+    {
+        if (mat == null || stages == null || stages.Count < 2) return;
+
+        progress = Mathf.Clamp01(progress);
 
         // Determine fractional stage index
-        float totalStageIndex = globalSlider * (stages.Count - 1);
-
+        float totalStageIndex = progress * (stages.Count - 1);
         int stageA_index = Mathf.FloorToInt(totalStageIndex);
         int stageB_index = Mathf.CeilToInt(totalStageIndex);
-        float localLerp = totalStageIndex - stageA_index;
 
-        // Clamp to avoid errors
+        // Clamp indices
         stageA_index = Mathf.Clamp(stageA_index, 0, stages.Count - 1);
         stageB_index = Mathf.Clamp(stageB_index, 0, stages.Count - 1);
 
         MacularDegenerationSettings A = stages[stageA_index];
         MacularDegenerationSettings B = stages[stageB_index];
 
+        float t = totalStageIndex - stageA_index;
+
         // Interpolate values
-        Vector2 lerpedShapeScale = Vector2.Lerp(A.Shape_Scale, B.Shape_Scale, localLerp);
-        float lerpedFalloffPower = Mathf.Lerp(A.Falloff_Power, B.Falloff_Power, localLerp);
-        float lerpedIntensity = Mathf.Lerp(A.Intensity, B.Intensity, localLerp);
-        float lerpedWarpStrength = Mathf.Lerp(A.Warp_Strength, B.Warp_Strength, localLerp);
-        float lerpedWarpScale = Mathf.Lerp(A.Warp_Scale, B.Warp_Scale, localLerp);
+        Vector2 lerpedShapeScale = Vector2.Lerp(A.Shape_Scale, B.Shape_Scale, t);
+        float lerpedFalloffPower = Mathf.Lerp(A.Falloff_Power, B.Falloff_Power, t);
+        float lerpedIntensity = Mathf.Lerp(A.Intensity, B.Intensity, t);
+        float lerpedWarpStrength = Mathf.Lerp(A.Warp_Strength, B.Warp_Strength, t);
+        float lerpedWarpScale = Mathf.Lerp(A.Warp_Scale, B.Warp_Scale, t);
+        
+        // Boolean is usually taken from the current "floor" stage
         bool invert = A.Invert;
 
-        if(eye == "Both")
-        {
-            // Apply to all materials
-            foreach (var mat in materialInstances)
-            {
-                if (mat == null) continue;
-
-                mat.SetVector(shapeScaleID, lerpedShapeScale);
-                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
-                mat.SetFloat(intensityID, lerpedIntensity);
-                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
-                mat.SetFloat(warpScaleID, lerpedWarpScale);
-                mat.SetFloat(invertID, invert ? 1f : 0f);
-            }
-        }
-        else if (eye == "Left" && materialInstances.Length > 0)
-        {
-            print("Applying to left eye");
-            // Only first material
-            var mat = materialInstances[0];
-            if (mat != null)
-            {
-                mat.SetVector(shapeScaleID, lerpedShapeScale);
-                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
-                mat.SetFloat(intensityID, lerpedIntensity);
-                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
-                mat.SetFloat(warpScaleID, lerpedWarpScale);
-                mat.SetFloat(invertID, invert ? 1f : 0f);
-            }
-        } 
-        else if (eye == "Right" && materialInstances.Length > 1)
-        {
-            print("Applying to right eye");
-            // Only second material
-            var mat = materialInstances[1];
-            if (mat != null)
-            {
-                mat.SetVector(shapeScaleID, lerpedShapeScale);
-                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
-                mat.SetFloat(intensityID, lerpedIntensity);
-                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
-                mat.SetFloat(warpScaleID, lerpedWarpScale);
-                mat.SetFloat(invertID, invert ? 1f : 0f);
-            }
-        }
+        // Apply to material
+        mat.SetVector(shapeScaleID, lerpedShapeScale);
+        mat.SetFloat(falloffPowerID, lerpedFalloffPower);
+        mat.SetFloat(intensityID, lerpedIntensity);
+        mat.SetFloat(warpStrengthID, lerpedWarpStrength);
+        mat.SetFloat(warpScaleID, lerpedWarpScale);
+        mat.SetFloat(invertID, invert ? 1f : 0f);
     }
 
-    /// <summary>
-    /// Snap the material instantly to a specific stage.
-    /// </summary>
+    // --- Public API for UI / External Scripts ---
+
+    public void SetNormalizedValue(float value, string eye = "Both")
+    {
+        value = Mathf.Clamp01(value);
+        // Debug.Log($"Macular SetNormalizedValue: {value} for {eye}");
+
+        if (eye == "Both")
+        {
+            globalSlider = value;
+            leftEyeSlider = value;
+            rightEyeSlider = value;
+        }
+        else if (eye == "Left")
+        {
+            leftEyeSlider = value;
+        }
+        else if (eye == "Right")
+        {
+            rightEyeSlider = value;
+        }
+
+        // Apply immediately
+        if (eye == "Left" || eye == "Both") ApplySettingsToMaterial(leftMatInstance, leftEyeSlider);
+        if (eye == "Right" || eye == "Both") ApplySettingsToMaterial(rightMatInstance, rightEyeSlider);
+        
+        UpdateLastValues();
+    }
+
+    // --- Debug Helpers ---
+
     private void SnapToStage(int stageIndex)
     {
-        if (materialInstances == null || stageIndex < 0 || stageIndex >= stages.Count)
-            return;
+        if (stages == null || stageIndex < 0 || stageIndex >= stages.Count) return;
 
         currentStageIndex = stageIndex;
-        MacularDegenerationSettings S = stages[currentStageIndex];
+        float val = (float)currentStageIndex / (stages.Count - 1);
 
-        foreach (var mat in materialInstances)
-        {
-            if (mat == null) continue;
-
-            mat.SetVector(shapeScaleID, S.Shape_Scale);
-            mat.SetFloat(falloffPowerID, S.Falloff_Power);
-            mat.SetFloat(intensityID, S.Intensity);
-            mat.SetFloat(warpStrengthID, S.Warp_Strength);
-            mat.SetFloat(warpScaleID, S.Warp_Scale);
-            mat.SetFloat(invertID, S.Invert ? 1f : 0f);
-        }
-
-        // Update the slider accordingly
-        globalSlider = (float)currentStageIndex / (float)(stages.Count - 1);
+        // Debug buttons snap everything (Global behavior)
+        globalSlider = val;
+        leftEyeSlider = val;
+        rightEyeSlider = val;
     }
 
-    // Debug helpers
     [ContextMenu("Next Stage")]
     public void GoToNextStage()
     {
         if (stages == null || stages.Count == 0) return;
-
         int next = (currentStageIndex + 1) % stages.Count;
         SnapToStage(next);
     }
@@ -205,17 +224,8 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
     public void GoToPreviousStage()
     {
         if (stages == null || stages.Count == 0) return;
-
         int prev = currentStageIndex - 1;
         if (prev < 0) prev = stages.Count - 1;
-
         SnapToStage(prev);
-    }
-
-    public void SetNormalizedValue(float value, string eye = "Both")
-    {
-        print("value received: " + value + " for eye: " + eye);
-        globalSlider = Mathf.Clamp01(value);
-        UpdateMaterialProperties(eye);
     }
 }

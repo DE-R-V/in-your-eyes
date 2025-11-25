@@ -149,7 +149,7 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
         } 
         else if (eye == "Right" && materialInstances.Length > 1)
         {
-            
+            print("Applying to right eye");
             // Only second material
             var mat = materialInstances[1];
             if (mat != null)

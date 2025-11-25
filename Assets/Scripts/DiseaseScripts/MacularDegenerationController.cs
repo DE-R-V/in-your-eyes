@@ -90,7 +90,7 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
     /// <summary>
     /// Interpolates between stages based on globalSlider and applies to all materials.
     /// </summary>
-    private void UpdateMaterialProperties()
+    private void UpdateMaterialProperties(string eye = "Both")
     {
         if (materialInstances == null || materialInstances.Length == 0)
             return;
@@ -117,17 +117,50 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
         float lerpedWarpScale = Mathf.Lerp(A.Warp_Scale, B.Warp_Scale, localLerp);
         bool invert = A.Invert;
 
-        // APPLY TO ALL MATERIAL INSTANCES
-        foreach (Material mat in materialInstances)
+        if(eye == "Both")
         {
-            if (mat == null) continue;
+            // Apply to all materials
+            foreach (var mat in materialInstances)
+            {
+                if (mat == null) continue;
 
-            mat.SetVector(shapeScaleID, lerpedShapeScale);
-            mat.SetFloat(falloffPowerID, lerpedFalloffPower);
-            mat.SetFloat(intensityID, lerpedIntensity);
-            mat.SetFloat(warpStrengthID, lerpedWarpStrength);
-            mat.SetFloat(warpScaleID, lerpedWarpScale);
-            mat.SetFloat(invertID, invert ? 1f : 0f);
+                mat.SetVector(shapeScaleID, lerpedShapeScale);
+                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
+                mat.SetFloat(intensityID, lerpedIntensity);
+                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
+                mat.SetFloat(warpScaleID, lerpedWarpScale);
+                mat.SetFloat(invertID, invert ? 1f : 0f);
+            }
+        }
+        else if (eye == "Left" && materialInstances.Length > 0)
+        {
+            print("Applying to left eye");
+            // Only first material
+            var mat = materialInstances[0];
+            if (mat != null)
+            {
+                mat.SetVector(shapeScaleID, lerpedShapeScale);
+                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
+                mat.SetFloat(intensityID, lerpedIntensity);
+                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
+                mat.SetFloat(warpScaleID, lerpedWarpScale);
+                mat.SetFloat(invertID, invert ? 1f : 0f);
+            }
+        } 
+        else if (eye == "Right" && materialInstances.Length > 1)
+        {
+            
+            // Only second material
+            var mat = materialInstances[1];
+            if (mat != null)
+            {
+                mat.SetVector(shapeScaleID, lerpedShapeScale);
+                mat.SetFloat(falloffPowerID, lerpedFalloffPower);
+                mat.SetFloat(intensityID, lerpedIntensity);
+                mat.SetFloat(warpStrengthID, lerpedWarpStrength);
+                mat.SetFloat(warpScaleID, lerpedWarpScale);
+                mat.SetFloat(invertID, invert ? 1f : 0f);
+            }
         }
     }
 
@@ -179,9 +212,10 @@ public class MacularDegenerationController : MonoBehaviour, IDiseaseController
         SnapToStage(prev);
     }
 
-        public void SetNormalizedValue(float value)
+    public void SetNormalizedValue(float value, string eye = "Both")
     {
+        print("value received: " + value + " for eye: " + eye);
         globalSlider = Mathf.Clamp01(value);
-        UpdateMaterialProperties();
+        UpdateMaterialProperties(eye);
     }
 }

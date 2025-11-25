@@ -77,7 +77,7 @@ public class CataractController : MonoBehaviour, IDiseaseController
             UpdateMaterialProperties();
     }
 
-    private void UpdateMaterialProperties()
+    private void UpdateMaterialProperties(string eye = "Both")
     {
         if (materialInstances == null || stages == null || stages.Count < 2)
             return;
@@ -98,12 +98,33 @@ public class CataractController : MonoBehaviour, IDiseaseController
         float lerpedTint = Mathf.Lerp(stageA.Tint_Strength, stageB.Tint_Strength, localLerp);
 
         // Apply to all materials
-        foreach (Material mat in materialInstances)
+        if (eye == "Both")
         {
+            // Modify all materials
+            foreach (Material mat in materialInstances)
+            {
+                mat.SetFloat(blurStrengthID, lerpedBlur);
+                mat.SetColor(tintColorID, lerpedColor);
+                mat.SetFloat(tintStrengthID, lerpedTint);
+            }
+        }
+        else if (eye == "Left" && materialInstances.Length > 0)
+        {
+            // Only first material
+            Material mat = materialInstances[0];
             mat.SetFloat(blurStrengthID, lerpedBlur);
             mat.SetColor(tintColorID, lerpedColor);
             mat.SetFloat(tintStrengthID, lerpedTint);
         }
+        else if (eye == "Right" && materialInstances.Length > 1)
+        {
+            // Only second material
+            Material mat = materialInstances[1];
+            mat.SetFloat(blurStrengthID, lerpedBlur);
+            mat.SetColor(tintColorID, lerpedColor);
+            mat.SetFloat(tintStrengthID, lerpedTint);
+        }
+
     }
 
     private void SnapToStage(int stageIndex)
@@ -146,9 +167,10 @@ public class CataractController : MonoBehaviour, IDiseaseController
         SnapToStage(prevStage);
     }
 
-        public void SetNormalizedValue(float value)
+    public void SetNormalizedValue(float value, string eye = "Both")
     {
+        print("value received: " + value + " for eye: " + eye);
         globalSlider = Mathf.Clamp01(value);
-        UpdateMaterialProperties();
+        UpdateMaterialProperties(eye);
     }
 }

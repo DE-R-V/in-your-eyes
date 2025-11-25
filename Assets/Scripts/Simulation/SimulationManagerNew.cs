@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using TMPro;
+using System;
 
 /// <summary>
 /// Handles simulation flow: toggling simulation/info UI and sending slider input
@@ -10,7 +10,9 @@ using TMPro;
 public class SimulationManagerNew : MonoBehaviour
 {
     [Header("In Simulation")]
-    [SerializeField] private Slider slider;                // slider for controlling disease effect
+    [SerializeField] private Slider overallSlider;
+    [SerializeField] private Slider leftEyeSlider;
+    [SerializeField] private Slider rightEyeSlider;
 
     [SerializeField] private SimulationPanelManager simulationPanelManager;
 
@@ -25,8 +27,15 @@ public class SimulationManagerNew : MonoBehaviour
     private void Awake()
     {
         // Slider callback
-        if (slider != null)
-            slider.onValueChanged.AddListener(OnSliderChanged);
+        if (overallSlider != null)
+            overallSlider.onValueChanged.AddListener(value => OnSliderChanged(value, "Both"));
+
+        if (leftEyeSlider != null)
+            leftEyeSlider.onValueChanged.AddListener(value => OnSliderChanged(value, "Left"));
+
+        if (rightEyeSlider != null)
+            rightEyeSlider.onValueChanged.AddListener(value => OnSliderChanged(value, "Right"));
+
 
         // Input action callback
         if (toggleSimulationAction != null)
@@ -64,7 +73,7 @@ public class SimulationManagerNew : MonoBehaviour
         }
 
         // Immediately apply slider value to controller
-        OnSliderChanged(slider != null ? slider.value : 1f);
+        OnSliderChanged(overallSlider != null ? overallSlider.value : 1f, "Both");
     }
 
     /// <summary>
@@ -80,7 +89,7 @@ public class SimulationManagerNew : MonoBehaviour
         isSimulationActive = true;
 
         // Push current slider value
-        OnSliderChanged(slider != null ? slider.value : 1f);
+        OnSliderChanged(overallSlider != null ? overallSlider.value : 1f, "Both");
     }
 
     /// <summary>
@@ -92,7 +101,7 @@ public class SimulationManagerNew : MonoBehaviour
 
         simulationPanelManager.CloseSimulationPanel();
         currentDiseaseObject.SetActive(false);
-        slider.value = 0f;
+        overallSlider.value = 0f;
         isSimulationActive = false;
     }
 
@@ -110,10 +119,11 @@ public class SimulationManagerNew : MonoBehaviour
     /// <summary>
     /// Called by slider; sends value to current disease controller.
     /// </summary>
-    private void OnSliderChanged(float value)
+    private void OnSliderChanged(float value, string eye)
     {
-        print("Slider changed: " + value + " | Controller: " + currentController);
-        currentController?.SetNormalizedValue(value);
+        print("Slider changed: " + value + " | Controller: " + currentController + " | Eye: " + eye);
+
+        currentController?.SetNormalizedValue(value, eye);
     }
 
     public void ClearDisease()

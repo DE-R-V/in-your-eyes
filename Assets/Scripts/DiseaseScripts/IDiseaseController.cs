@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 
 public interface IDiseaseController
 {
@@ -7,5 +8,5 @@ public interface IDiseaseController
     /// Each controller interprets this value according to its ScriptableObjects / shader logic.
     /// </summary>
     /// <param name="value">Normalized slider value</param>
-    void SetNormalizedValue(float value);
+    void SetNormalizedValue(float value, string eye);
 }

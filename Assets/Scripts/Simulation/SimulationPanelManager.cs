@@ -3,14 +3,6 @@ using TMPro;
 using Unity.VectorGraphics;
 using UnityEngine.UI;
 
-public enum SliderSide
-{
-    Left,
-    Right
-
-
-}
-
 public class SimulationPanelManager : MonoBehaviour
 {
     [SerializeField] private XRInteractionMode xrModeManager;
@@ -19,6 +11,9 @@ public class SimulationPanelManager : MonoBehaviour
     [Header("Simulation Panel")]
     [SerializeField] private GameObject simulationPanel;
     [SerializeField] private TextMeshProUGUI label;
+    [Header("Overall Slider")]
+    [SerializeField] private RectTransform overallSliderBackground;
+    [SerializeField] private GameObject overallSliderContent;
     [Header("Left Slider")]
     [SerializeField] private RectTransform leftSliderBackground;
     [SerializeField] private GameObject leftSliderContent;
@@ -35,13 +30,16 @@ public class SimulationPanelManager : MonoBehaviour
 
     private bool isLeftSliderOpen = false;
     private bool isRightSliderOpen = false;
+    private bool isOverallSliderOpen = false;
 
     private void Awake()
     {                
         leftSliderBackground.sizeDelta = new Vector2(300, leftSliderBackground.sizeDelta.y);      
         rightSliderBackground.sizeDelta = new Vector2(300, rightSliderBackground.sizeDelta.y);
+        overallSliderBackground.sizeDelta = new Vector2(300, overallSliderBackground.sizeDelta.y);
         leftSliderContent.SetActive(false);
         rightSliderContent.SetActive(false);
+        overallSliderContent.SetActive(false);
     }
     private void OnEnable()
     {
@@ -72,7 +70,7 @@ public class SimulationPanelManager : MonoBehaviour
                 label.text = "Press X, Y, A or B to close the simulation.";
                 break;
             case XRInputMode.Hands:
-                label.text = "Do a thumbs up to close the simulation.";
+                label.text = "Do a 'call me' gesture to close the simulation.";
                 break;
         }
     }
@@ -124,35 +122,54 @@ public class SimulationPanelManager : MonoBehaviour
 
     public void ToggleSlider(string side)
     {
-        if (side == SliderSide.Left.ToString())
+        print("Toggling slider: " + side);
+        switch(side) 
         {
-            if(isLeftSliderOpen)
-            {
-                leftSliderContent.SetActive(false);
-                isLeftSliderOpen = false;
-                leftSliderBackground.sizeDelta = new Vector2(300, leftSliderBackground.sizeDelta.y);
-            }
-            else
-            {
-                leftSliderContent.SetActive(true);
-                isLeftSliderOpen = true;
-                leftSliderBackground.sizeDelta = new Vector2(800, leftSliderBackground.sizeDelta.y);
-            }
-        }
-        else if (side == SliderSide.Right.ToString())
-        {
-            if(isRightSliderOpen)
-            {
-                rightSliderContent.SetActive(false);
-                isRightSliderOpen = false;
-                rightSliderBackground.sizeDelta = new Vector2(300, rightSliderBackground.sizeDelta.y);
-            }
-            else
-            {
-                rightSliderContent.SetActive(true);
-                isRightSliderOpen = true;
-                rightSliderBackground.sizeDelta = new Vector2(800, rightSliderBackground.sizeDelta.y);
-            }
+            case "Left":
+                print("Toggling left slider");
+                if(isLeftSliderOpen)
+                {
+                    leftSliderContent.SetActive(false);
+                    isLeftSliderOpen = false;
+                    leftSliderBackground.sizeDelta = new Vector2(300, leftSliderBackground.sizeDelta.y);
+                }
+                else
+                {
+                    leftSliderContent.SetActive(true);
+                    isLeftSliderOpen = true;
+                    leftSliderBackground.sizeDelta = new Vector2(800, leftSliderBackground.sizeDelta.y);
+                }
+                break;
+            case "Right":
+                print("Toggling right slider");
+                if(isRightSliderOpen)
+                {
+                    rightSliderContent.SetActive(false);
+                    isRightSliderOpen = false;
+                    rightSliderBackground.sizeDelta = new Vector2(300, rightSliderBackground.sizeDelta.y);
+                }
+                else
+                {
+                    rightSliderContent.SetActive(true);
+                    isRightSliderOpen = true;
+                    rightSliderBackground.sizeDelta = new Vector2(800, rightSliderBackground.sizeDelta.y);
+                }
+                break;
+            case "Overall":
+                print("Toggling overall slider");
+                if(isOverallSliderOpen)
+                {
+                    overallSliderContent.SetActive(false);
+                    isOverallSliderOpen = false;
+                    overallSliderBackground.sizeDelta = new Vector2(300, overallSliderBackground.sizeDelta.y);
+                }
+                else
+                {
+                    overallSliderContent.SetActive(true);
+                    isOverallSliderOpen = true;
+                    overallSliderBackground.sizeDelta = new Vector2(800, overallSliderBackground.sizeDelta.y);
+                }
+                break;
         }
     }
 }

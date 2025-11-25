@@ -96,7 +96,7 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
             UpdateMaterialProperties();
     }
 
-    private void UpdateMaterialProperties()
+    private void UpdateMaterialProperties(string eye = "Both")
     {
         if (materialInstances == null || stages == null || stages.Count < 2)
             return;
@@ -126,9 +126,31 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
         float lerpedFloaterSpeed = Mathf.Lerp(stageA.Floater_Speed, stageB.Floater_Speed, localLerp);
         float lerpedFloaterWidth = Mathf.Lerp(stageA.Floater_Width, stageB.Floater_Width, localLerp);
 
-        // APPLY TO BOTH MATERIAL INSTANCES
-        foreach (Material mat in materialInstances)
+        List<int> targetIndices = new List<int>();
+
+        switch (eye)
         {
+            case "Left":
+                if (materialInstances.Length > 0)
+                    targetIndices.Add(0);
+                break;
+
+            case "Right":
+                if (materialInstances.Length > 1)
+                    targetIndices.Add(1);
+                break;
+
+            default: // "Both"
+                targetIndices.Add(0);
+                if (materialInstances.Length > 1)
+                    targetIndices.Add(1);
+                break;
+        }
+
+        foreach (int i in targetIndices)
+        {
+            Material mat = materialInstances[i];
+
             mat.SetFloat(spotAmountID, lerpedSpotAmount);
             mat.SetFloat(spotSizeID, lerpedSpotSize);
             mat.SetFloat(darknessID, lerpedDarkness);
@@ -137,13 +159,15 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
             mat.SetFloat(warpStrengthID, lerpedWarpStrength);
             mat.SetFloat(warpScaleID, lerpedWarpScale);
 
-            // Set Floater Properties
+            // Floater Properties
             mat.SetFloat(floaterOpacityID, lerpedFloaterOpacity);
             mat.SetFloat(floaterDensityID, lerpedFloaterDensity);
             mat.SetFloat(floaterSpeedID, lerpedFloaterSpeed);
             mat.SetFloat(floaterWidthID, lerpedFloaterWidth);
         }
     }
+
+    
 
     private void SnapToStage(int stageIndex)
     {
@@ -193,9 +217,10 @@ public class DiabeticRetinopathyController : MonoBehaviour, IDiseaseController
         SnapToStage(prevStage);
     }
 
-    public void SetNormalizedValue(float value)
+    public void SetNormalizedValue(float value, string eye = "Both")
     {
+        print("value received: " + value + " for eye: " + eye);
         globalSlider = Mathf.Clamp01(value);
-        UpdateMaterialProperties();
+        UpdateMaterialProperties(eye);
     }
 }

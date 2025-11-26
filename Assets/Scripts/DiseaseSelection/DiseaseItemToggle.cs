@@ -54,6 +54,8 @@ public class DiseaseItemToggle : MonoBehaviour, IPointerEnterHandler, IPointerEx
         }
 
         SetState(false);
+        if (UIAudioManager.Instance != null && button != null)
+            UIAudioManager.Instance.BindUIElement(button);
     }
 
     public void OnClicked()
